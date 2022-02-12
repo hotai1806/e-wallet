@@ -1,16 +1,37 @@
-# This is a sample Python script.
+""" root module"""
+from flask import Flask
+from flask_migrate import Migrate
+from src.models.models_base import db
+from src.models.account import Account
+from src.models.merchant import Merchant
+from src.models.transaction import Transaction
+from src.routes.account_url import account_bp
+from src.setting import ENV, APP, DATABASE_CONNECTION
 
-# Press ⌃F5 to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
+# app.config['SECRET_KEY'] = "random string"
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_CONNECTION
+app.config["ENV"] = ENV
+app.config["APPLICATION_ROOT"] = APP
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press F9 to toggle the breakpoint.
+db.init_app(app)
+migrate = Migrate(app, db)
+#
+app.register_blueprint(account_bp, url_prefix="/accounts")
+# app.register_blueprint(product_bp.product_bp, url_prefix="/product")
+# app.register_blueprint(cart_bp.cart_bp, url_prefix="/cart")
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+@app.route("/")
+def hello_world():
+    """
+    Server status message
+    """
+    return "<p>Service still alive</p>"
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+if __name__ == "__main__":
+    app.run()

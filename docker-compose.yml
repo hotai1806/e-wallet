@@ -1,0 +1,42 @@
+version: "3.0"
+services:
+  db:
+    image: postgres:11.9-alpine
+    environment:
+      POSTGRES_DB: shopping
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: youknow
+    ports:
+      - 5433:5432
+    networks:
+      - flask-network
+#  web_backend:
+#    build: .
+#    image: 'shoping-cart:latest'
+#    ports:
+#      - 5000:5000
+#    environment:
+#      FLASK_APP: main
+#      FLASK_DEBUG: 1
+#      FLASK_ENV: development
+#    command:
+#      sh -c "poetry shell ;\
+#      flask run;"
+#    env_file:
+#      - .env
+#    environment:
+#      DB_HOST: db
+#      DATABASE_URL: postgres://admin:youknow@db:5432/shoping
+#    depends_on:
+#      - db
+#    links:
+#      - db:db
+#    networks:
+#      - flask-network
+#    volumes:
+#      - "./:/app"
+#    restart: always
+
+networks:
+  flask-network:
+    driver: bridge
