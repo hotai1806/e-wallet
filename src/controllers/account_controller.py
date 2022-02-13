@@ -35,5 +35,6 @@ def create_account():
     account = Account(account_type=account_type)
     db.session.add(account)
     db.session.commit()
+
     return make_response(SuccessMessage.CREATE_SUCCESS)
 
