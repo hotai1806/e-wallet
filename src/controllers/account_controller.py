@@ -35,6 +35,24 @@ def create_account():
     account = Account(account_type=account_type)
     db.session.add(account)
     db.session.commit()
-
     return make_response(SuccessMessage.CREATE_SUCCESS)
 
+def top_up(user_id):
+    """api top up account
+
+    Returns:
+        [message]: [string]
+    """
+    account_id = request.get_json()['accountId']
+    amount = request.get_json()['amount']
+
+    if not account_id or not amount:
+        return make_response(ErrorMessage.INVALID_DATA_INPUT)
+
+    account = Account.query.filter_by(account_id=account_id).first()
+    if not account:
+        return make_response(ErrorMessage.INVALID_ACCOUNT)
+
+    account.balance += amount
+    db.session.commit()
+    return make_response(SuccessMessage.CREATE_SUCCESS)

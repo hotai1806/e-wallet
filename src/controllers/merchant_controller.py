@@ -36,10 +36,8 @@ def sign_up_merchant():
 
 
     merchant = Merchant(merchant_name=merchant_name, merchant_url=merchant_url, account_id=account_merchant.account_id)
-    # db.session.add(account_merchant)
     db.session.add(merchant)
     db.session.commit()
-    # db.session.close()
     data_response = {"merchantName": merchant.merchant_name,
                      "merchantId": merchant.merchant_id, "apiKey": merchant.api_key,
                      "merchantUrl": merchant.merchant_url, "accountId": merchant.account_id}

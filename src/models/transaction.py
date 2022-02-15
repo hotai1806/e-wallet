@@ -25,9 +25,11 @@ class Transaction(db.Model):
 
 
 
-    def __init__(self, merchantId, incomeAccount, outcomeAccount, amount, status):
-        self.merchantId = merchantId
+    def __init__(self, merchantId, incomeAccount, outcomeAccount, amount, status,extraData, signature):
+        self.merchant_id = merchantId
         self.incomeAccount = incomeAccount
         self.outcomeAccount = outcomeAccount
         self.amount = amount
+        self.extraData = extraData
+        self.signature = signature
         self.status = status

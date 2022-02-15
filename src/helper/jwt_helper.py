@@ -23,7 +23,7 @@ class InvalidAPIUsage(Exception):
         return {"message": self.message, "status_code": self.status_code}
 
 
-def encode_auth_token(user_id):
+def encode_auth_token(user_id, signature=None):
     """
     Generates the Auth Token
     :return: string
@@ -32,7 +32,8 @@ def encode_auth_token(user_id):
         payload = {
             'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=200),
             'iat': datetime.datetime.utcnow(),
-            'user': user_id
+            'user': user_id,
+            'signature': signature or None
         }
         return jwt.encode(
             payload,
@@ -43,15 +44,18 @@ def encode_auth_token(user_id):
         raise error
 
 
-def decode_auth_token(auth_token):
+def decode_auth_token(auth_token, secret_key=None):
     """
     Decodes the auth token
     :param auth_token:
     :return: integer|string
     """
     try:
-        payload = jwt.decode(auth_token, SECRET_KEY, algorithms=['HS256'])
-        return payload['user']
+        if secret_key:
+            payload = jwt.decode(auth_token, str(secret_key),algorithms=['HS256'])
+            return payload
+        payload = jwt.decode(auth_token, SECRET_KEY,algorithms=['HS256'], options={'verify_signature': False})
+        return payload
     except jwt.ExpiredSignatureError:
         raise InvalidAPIUsage('Signature expired. Please log in again.', 401)
     except jwt.InvalidTokenError:
