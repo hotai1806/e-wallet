@@ -5,7 +5,7 @@ from src.helper.jwt_helper import encode_auth_token
 from src.models.account import Account
 from src.models.models_base import db
 from src.constants.account_type_constants import AccountType
-from src.constants.message_constant import ErrorMessage , SuccessMessage
+from src.constants.message_constant import ErrorMessage, SuccessMessage
 
 
 def get_account_token(accountId):
@@ -35,9 +35,11 @@ def create_account():
     account = Account(account_type=account_type)
     db.session.add(account)
     db.session.commit()
-    return make_response(SuccessMessage.CREATE_SUCCESS)
+    return make_response({'accountType': account.account_type,
+                         'accountId': account.account_id, 'balance': account.balance}, 200)
 
-def top_up(user_id):
+
+def top_up(accountId):
     """api top up account
 
     Returns:
@@ -55,4 +57,5 @@ def top_up(user_id):
 
     account.balance += amount
     db.session.commit()
-    return make_response(SuccessMessage.CREATE_SUCCESS)
+    return make_response({'accountType': account.account_type, 'accountId': account.account_id, 'balance': account.balance}, 200)
+    # return make_response(SuccessMessage.CREATE_SUCCESS)

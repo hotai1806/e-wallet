@@ -6,3 +6,7 @@ class ErrorMessage(object):
 
 class SuccessMessage:
     CREATE_SUCCESS = {"message": "Success"}, 200
+    CONFIRM_SUCCESS = {"message": "Success", "code":"SUC"}, 200
+    VERIFY_SUCCESS = {"message": "Success", "code":"SUC"}, 200
+    CANCEL_SUCCESS = {"message": "Success", "code":"SUC"}, 200
+

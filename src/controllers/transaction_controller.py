@@ -33,18 +33,27 @@ mock_response_create_transaction = {
 }
 
 
+def change_status(status, transaction_id):
+    transaction = Transaction.query.filter_by(
+        transaction_id=transaction_id).first()
+    transaction.status = status
+    db.session.commit()
+    return None
+
+
 @authentication_required(AccountType.MERCHANT.value)
 def create_transaction(payload_jwt):
     """
     controller submit login api POST
     return access_token: string || None
     """
+    # Extract data from body 
     body_data = request.form.to_dict()
-    print(body_data)
     merchant_id = body_data['merchantId']
     extraData = body_data['extraData']
     amount = int(body_data['amount'])
 
+    # Prepare data to check signature
     data_check_signature = {
         "merchantId": merchant_id,
         "amount": amount,
@@ -53,9 +62,6 @@ def create_transaction(payload_jwt):
 
     signature = hashlib.md5(json.dumps(
         data_check_signature, sort_keys=True).encode('utf-8')).hexdigest()
-
-    print(signature)
-    print(payload_jwt['signature'])
     if signature != payload_jwt['signature']:
         return make_response(ErrorMessage.INVALID_SIGNATURE)
 
@@ -68,8 +74,6 @@ def create_transaction(payload_jwt):
         incomeAccount=payload_jwt['user'],
         outcomeAccount=None,
         extraData=extraData, signature=signature)
-    print(payload_jwt['user'])
-    print(transaction.income_account)
     db.session.add(transaction)
     db.session.commit()
     data_response = {
@@ -79,5 +83,46 @@ def create_transaction(payload_jwt):
         "outcomeAccount": transaction.outcomeAccount,
         "amount": transaction.amount, 'signature': signature,
         'extraData': transaction.extraData, 'status': transaction.status}
-    response = make_response(data_response,200)
+    from threading import Timer
+    # Timer(2, change_status, ["CREATE", transaction.transaction_id,db]).start()
+
+    response = make_response(data_response, 200)
     return response
+
+@authentication_required(AccountType.PERSONAL.value)
+def confirm_transaction(payload_jwt):
+    """ Api confirm transaction
+    return "code: "SUC" , "message"
+    """
+    body_data = request.form.to_dict()
+    transactionId = body_data['transactionId']
+    transaction = Transaction.query.filter_by(transaction_id=transactionId).first()
+    transaction.status = StatusTransaction.CONFIRM.value
+    transaction.outcomeAccount = payload_jwt['user']
+    db.session.commit()
+    return make_response(SuccessMessage.CONFIRM_SUCCESS)
+
+
+@authentication_required(AccountType.PERSONAL.value)
+def verify_transaction(payload_jwt):
+    """ Api verify transaction
+    return "code: "SUC" , "message"
+    """
+    body_data = request.form.to_dict()
+    transactionId = body_data['transactionId']
+    transaction = Transaction.query.filter_by(transaction_id=transactionId).first()
+    transaction.status = StatusTransaction.VERIFY.value
+    db.session.commit()
+    return make_response(SuccessMessage.VERIFY_SUCCESS)
+
+@authentication_required(AccountType.PERSONAL.value)
+def cancel_transaction(payload_jwt):
+    """ Api cancel transaction
+    return "code: "SUC" , "message"
+    """
+    body_data = request.form.to_dict()
+    transactionId = body_data['transactionId']
+    transaction = Transaction.query.filter_by(transaction_id=transactionId).first()
+    transaction.status = StatusTransaction.CANCEL.value
+    db.session.commit()
+    return make_response(SuccessMessage.CANCEL_SUCCESS)

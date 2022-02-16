@@ -2,10 +2,12 @@
 from functools import wraps
 
 from flask import abort, request, make_response
+from src.constants.account_type_constants import AccountType
 
 from src.helper.jwt_helper import decode_auth_token
 from src.models.merchant import Merchant
 from src.models.account import Account
+from src.setting import SECRET_KEY
 
 
 def authentication_required(*list_account_type):
@@ -30,16 +32,17 @@ def authentication_required(*list_account_type):
                     account_id=user_id_not_verify).first()
                 if user_check_type.account_type not in list_account_type:
                     abort(403)
-                api_key = Merchant.query.filter_by(
-                    account_id=user_check_type.account_id).first().api_key
-                if not api_key:
-                    abort(401)
-                payload_jwt = decode_auth_token(token, api_key)
-
+                if user_check_type.account_type == AccountType.MERCHANT.value:
+                    api_key = Merchant.query.filter_by(
+                        account_id=user_check_type.account_id).first().api_key
+                    if not api_key:
+                        abort(403)
+                    payload_jwt = decode_auth_token(token, api_key)
+                payload_jwt = decode_auth_token(token)
             except Exception as error:
-                message_error = error.to_dict()
+                print(error)
                 response = make_response(
-                    {"message": message_error["message"]}, message_error["status_code"])
+                    {"message":"Error"}, 401)
                 return response
 
             return function_api(payload_jwt, *args, **kws)
