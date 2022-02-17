@@ -9,7 +9,7 @@ def setup_logging():
     """
     # Handlers - Formats - Levels
     c_handler = logging.StreamHandler(sys.stdout)
-    f_handler = logging.FileHandler("logs/appdata.log")
+    f_handler = logging.FileHandler("src/logs/appdata.log")
     log_format = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
     c_handler.setFormatter(log_format)
     f_handler.setFormatter(log_format)

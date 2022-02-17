@@ -3,8 +3,19 @@ class ErrorMessage(object):
     INVALID_DATA_INPUT = {"message": "Invalid data input"}, 400
     INVALID_MERCHANT_ID = {"message": "Invalid merchant id"}, 400
     INVALID_SIGNATURE = {"message": "Invalid signature"}, 400
+
+
+class ErrorTransactionMessage(object):
     TRANSACTION_NOT_INITIALIZED = {
         "message": "Transaction not initialized"},   400
+    TRANSACTION_NOT_CONFIRMED = {
+        "message": "Transaction not confirmed"},   400
+    TRANSACTION_FAILED = {"message": "Transaction failed"}, 400
+    TRANSACTION_COMPLETED = {"message": "Transaction already completed"}, 400
+
+
+class UserMessage:
+    BALANCE_NOT_ENOUGH = {"message": "Balance not enough"}, 400
 
 
 class SuccessMessage:

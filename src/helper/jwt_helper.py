@@ -4,6 +4,9 @@ import datetime
 import jwt
 
 from src.setting import SECRET_KEY
+from src.helper.log_helper import setup_logging
+
+logger = setup_logging()
 
 
 class InvalidAPIUsage(Exception):
@@ -39,6 +42,7 @@ def encode_auth_token(user_id, signature=None):
         }
         return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     except Exception as error:
+        logger.error(error)
         raise error
 
 

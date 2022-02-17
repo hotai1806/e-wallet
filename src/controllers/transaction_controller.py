@@ -9,7 +9,9 @@ from src.models.account import Account
 # local source
 from src.models.transaction import Transaction
 from src.models.models_base import db
-from src.constants.message_constant import ErrorMessage, SuccessMessage
+from src.constants.message_constant import (ErrorMessage,
+                                            SuccessMessage, UserMessage,
+                                            ErrorTransactionMessage)
 from src.constants.status_transaction_constants import StatusTransaction
 from src.middleware.decoratoer_auth import authentication_required
 
@@ -32,12 +34,11 @@ mock_response_create_transaction = {
 }
 
 
-def change_status(status, transaction_id):
+def change_status_transaction(status, transaction_id):
     transaction = Transaction.query.filter_by(
         transaction_id=transaction_id).first()
     transaction.status = status
     db.session.commit()
-    return None
 
 
 @authentication_required(AccountType.MERCHANT.value)
@@ -105,9 +106,14 @@ def confirm_transaction(payload_jwt):
         transaction_id=transactionId).first()
 
     if transaction.status != StatusTransaction.INITIALIZED.value:
-        return make_response(ErrorMessage.TRANSACTION_NOT_INITIALIZED)
+        return make_response(
+                ErrorTransactionMessage.TRANSACTION_NOT_INITIALIZED)
     account = Account.query.filter_by(account_id=payload_jwt["user"]).first()
-    print(account.balance)
+    if account.balance < transaction.amount:
+        change_status_transaction(StatusTransaction.FAILED.value,
+                                  transactionId)
+        return make_response(UserMessage.BALANCE_NOT_ENOUGH)
+
     transaction.status = StatusTransaction.CONFIRMED.value
     transaction.outcomeAccount = payload_jwt["user"]
     db.session.commit()
@@ -123,7 +129,19 @@ def verify_transaction(payload_jwt):
     transactionId = body_data["transactionId"]
     transaction = Transaction.query.filter_by(
         transaction_id=transactionId).first()
-    transaction.status = StatusTransaction.VERIFY.value
+    if transaction.status != StatusTransaction.VERIFYED.value:
+        return make_response(SuccessMessage.VERIFY_SUCCESS)
+    if transaction.status != StatusTransaction.CONFIRMED.value:
+        return make_response(ErrorTransactionMessage.TRANSACTION_NOT_CONFIRMED)
+    if transaction.status == StatusTransaction.FAILED.value:
+        return make_response(ErrorTransactionMessage.TRANSACTION_FAILED)
+    if transaction.outcome_account.balance < transaction.amount:
+        transaction.status = StatusTransaction.FAILED.value
+        db.session.commit()
+        return make_response(UserMessage.BALANCE_NOT_ENOUGH)
+    transaction.outcome_account.balance -= transaction.amount
+    transaction.income_account.balance += transaction.amount
+    transaction.status = StatusTransaction.VERIFYED.value
     db.session.commit()
     return make_response(SuccessMessage.VERIFY_SUCCESS)
 
@@ -137,6 +155,11 @@ def cancel_transaction(payload_jwt):
     transactionId = body_data["transactionId"]
     transaction = Transaction.query.filter_by(
         transaction_id=transactionId).first()
+    # check status cancel equal to cancel
+    if transaction.status == StatusTransaction.CANCELED.value:
+        return make_response(SuccessMessage.CANCEL_SUCCESS)
+    if transaction.status == StatusTransaction.COMPLETED.value:
+        return make_response(ErrorTransactionMessage.TRANSACTION_COMPLETED)
     transaction.status = StatusTransaction.CANCELED.value
     db.session.commit()
     return make_response(SuccessMessage.CANCEL_SUCCESS)
