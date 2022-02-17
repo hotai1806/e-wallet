@@ -31,8 +31,8 @@ def encode_auth_token(user_id, signature=None):
     """
     try:
         payload = {
-            "exp": datetime.datetime.utcnow() /
-            + datetime.timedelta(days=0, seconds=200),
+            "exp": datetime.datetime.utcnow()
+            + datetime.timedelta(days=10, seconds=200),
             "iat": datetime.datetime.utcnow(),
             "user": user_id,
             "signature": signature or None,

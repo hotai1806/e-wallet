@@ -7,6 +7,7 @@ from src.constants.account_type_constants import AccountType
 from src.helper.jwt_helper import decode_auth_token
 from src.models.merchant import Merchant
 from src.models.account import Account
+from src.setting import SECRET_KEY
 
 
 def authentication_required(*list_account_type):
@@ -37,13 +38,16 @@ def authentication_required(*list_account_type):
                         .first()
                         .api_key
                     )
+
                     if not api_key:
                         abort(403)
+
                     payload_jwt = decode_auth_token(token, api_key)
-                payload_jwt = decode_auth_token(token)
+                    return function_api(payload_jwt, *args, **kws)
+                payload_jwt = decode_auth_token(token, SECRET_KEY)
             except Exception as error:
-                print(error)
-                response = make_response({"message": "Error"}, 401)
+
+                response = make_response({"message": str(error)}, 500)
                 return response
 
             return function_api(payload_jwt, *args, **kws)

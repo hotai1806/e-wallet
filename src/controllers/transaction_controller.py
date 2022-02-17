@@ -4,6 +4,7 @@ from flask import request, make_response
 import hashlib
 import json
 from src.constants.account_type_constants import AccountType
+from src.models.account import Account
 
 # local source
 from src.models.transaction import Transaction
@@ -50,6 +51,7 @@ def create_transaction(payload_jwt):
     merchant_id = body_data["merchantId"]
     extraData = body_data["extraData"]
     amount = int(body_data["amount"])
+    signature_body = body_data["signature"]
 
     # Prepare data to check signature
     data_check_signature = {
@@ -61,7 +63,7 @@ def create_transaction(payload_jwt):
     signature = hashlib.md5(
         json.dumps(data_check_signature, sort_keys=True).encode("utf-8")
     ).hexdigest()
-    if signature != payload_jwt["signature"]:
+    if signature != payload_jwt["signature"] != signature_body:
         return make_response(ErrorMessage.INVALID_SIGNATURE)
 
     if not merchant_id or not extraData or not amount:
@@ -70,7 +72,7 @@ def create_transaction(payload_jwt):
     transaction = Transaction(
         merchantId=merchant_id,
         amount=amount,
-        status=StatusTransaction.CREATE.value,
+        status=StatusTransaction.INITIALIZED.value,
         incomeAccount=payload_jwt["user"],
         outcomeAccount=None,
         extraData=extraData,
@@ -89,8 +91,7 @@ def create_transaction(payload_jwt):
         "status": transaction.status,
     }
 
-    response = make_response(data_response, 200)
-    return response
+    return make_response(data_response, 200)
 
 
 @authentication_required(AccountType.PERSONAL.value)
@@ -102,7 +103,12 @@ def confirm_transaction(payload_jwt):
     transactionId = body_data["transactionId"]
     transaction = Transaction.query.filter_by(
         transaction_id=transactionId).first()
-    transaction.status = StatusTransaction.CONFIRM.value
+
+    if transaction.status != StatusTransaction.INITIALIZED.value:
+        return make_response(ErrorMessage.TRANSACTION_NOT_INITIALIZED)
+    account = Account.query.filter_by(account_id=payload_jwt["user"]).first()
+    print(account.balance)
+    transaction.status = StatusTransaction.CONFIRMED.value
     transaction.outcomeAccount = payload_jwt["user"]
     db.session.commit()
     return make_response(SuccessMessage.CONFIRM_SUCCESS)
@@ -131,6 +137,6 @@ def cancel_transaction(payload_jwt):
     transactionId = body_data["transactionId"]
     transaction = Transaction.query.filter_by(
         transaction_id=transactionId).first()
-    transaction.status = StatusTransaction.CANCEL.value
+    transaction.status = StatusTransaction.CANCELED.value
     db.session.commit()
     return make_response(SuccessMessage.CANCEL_SUCCESS)

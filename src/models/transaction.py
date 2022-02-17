@@ -31,13 +31,14 @@ class Transaction(db.Model):
     signature = db.Column(db.String(255))
     status = db.Column(
         db.Enum(
-            "CREATE",
-            "CONFIRM",
-            "VERIFY",
-            "CANCEL",
-            "EXPIRE",
-            "SUCCESS",
-            name="transaction_status",
+            "INITIALIZED",
+            "CONFIRMED",
+            "VERIFYED",
+            "CANCELED",
+            "EXPIRED",
+            "FAILED",
+            "COMPLETED",
+            name="transactions_status",
             create_type=False,
         ),
         nullable=False,

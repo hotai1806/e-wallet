@@ -2,9 +2,10 @@ from enum import Enum
 
 
 class StatusTransaction(Enum):
-    CREATE = "CREATE"
-    CONFIRM = "CONFIRM"
-    VERIFY = "VERIFY"
-    CANCEL = "CANCEL"
-    EXPIRE = "EXPIRE"
-    SUCCESS = "SUCCESS"
+    INITIALIZED = "INITIALIZED"
+    CONFIRMED = "CONFIRMED"
+    VERIFYED = "VERIFYED"
+    CANCELED = "CANCELED"
+    EXPIRED = "EXPIRED"
+    FAILED = "FAILED"
+    COMPLETED = "COMPLETED"

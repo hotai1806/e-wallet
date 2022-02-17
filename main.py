@@ -16,7 +16,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 
 db.init_app(app)
 migrate = Migrate(app, db)
-# Register blueprints
+#
 app.register_blueprint(account_bp, url_prefix="/accounts")
 app.register_blueprint(merchant_bp, url_prefix="/merchants")
 app.register_blueprint(transaction_bp, url_prefix="/transactions")

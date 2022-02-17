@@ -2,6 +2,7 @@
 from flask import request, make_response
 
 from src.helper.jwt_helper import encode_auth_token
+from src.middleware.decoratoer_auth import authentication_required
 from src.models.account import Account
 from src.models.models_base import db
 from src.constants.account_type_constants import AccountType
@@ -45,7 +46,8 @@ def create_account():
     )
 
 
-def top_up(accountId):
+@authentication_required(AccountType.ISSUER.value)
+def top_up(jwt_payload, accountId):
     """api top up account
 
     Returns:
@@ -71,4 +73,3 @@ def top_up(accountId):
         },
         200,
     )
-    # return make_response(SuccessMessage.CREATE_SUCCESS)
