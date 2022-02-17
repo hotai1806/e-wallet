@@ -8,24 +8,56 @@ from uuid import uuid4
 class Transaction(db.Model):
     __tablename__ = "transactions"
 
-    transaction_id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
-    merchant_id = db.Column(UUID(as_uuid=True), db.ForeignKey('merchants.merchant_id'), default=uuid4, nullable=False)
-    incomeAccount = db.Column(UUID(as_uuid=True), db.ForeignKey('accounts.account_id'), default=uuid4, nullable=False)
-    outcomeAccount = db.Column(UUID(as_uuid=True), db.ForeignKey('accounts.account_id'), nullable=True)
+    transaction_id = db.Column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False
+    )
+    merchant_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("merchants.merchant_id"),
+        default=uuid4,
+        nullable=False,
+    )
+    incomeAccount = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("accounts.account_id"),
+        default=uuid4,
+        nullable=False,
+    )
+    outcomeAccount = db.Column(
+        UUID(as_uuid=True), db.ForeignKey("accounts.account_id"), nullable=True
+    )
     amount = db.Column(db.Float, nullable=False)
     extraData = db.Column(db.String(255))
     signature = db.Column(db.String(255))
-    status = db.Column(db.Enum("CREATE", "CONFIRM", "VERIFY", "CANCEL", "EXPIRE", "SUCCESS",
-                               name="transaction_status", create_type=False), nullable=False)
+    status = db.Column(
+        db.Enum(
+            "CREATE",
+            "CONFIRM",
+            "VERIFY",
+            "CANCEL",
+            "EXPIRE",
+            "SUCCESS",
+            name="transaction_status",
+            create_type=False,
+        ),
+        nullable=False,
+    )
 
     # join table
     merchant = db.relationship(Merchant, backref="transactions")
     income_account = db.relationship(Account, foreign_keys=[incomeAccount])
     outcome_account = db.relationship(Account, foreign_keys=[outcomeAccount])
 
-
-
-    def __init__(self, merchantId, incomeAccount, outcomeAccount, amount, status,extraData, signature):
+    def __init__(
+        self,
+        merchantId,
+        incomeAccount,
+        outcomeAccount,
+        amount,
+        status,
+        extraData,
+        signature,
+    ):
         self.merchant_id = merchantId
         self.incomeAccount = incomeAccount
         self.outcomeAccount = outcomeAccount

@@ -5,7 +5,7 @@ from src.helper.jwt_helper import encode_auth_token
 from src.models.account import Account
 from src.models.models_base import db
 from src.constants.account_type_constants import AccountType
-from src.constants.message_constant import ErrorMessage, SuccessMessage
+from src.constants.message_constant import ErrorMessage
 
 
 def get_account_token(accountId):
@@ -27,7 +27,7 @@ def create_account():
     Returns:
         [message]: [string]
     """
-    account_type = request.get_json()['accountType']
+    account_type = request.get_json()["accountType"]
 
     if account_type not in AccountType._value2member_map_:
         return make_response(ErrorMessage.INVALID_USER_TYPE)
@@ -35,8 +35,14 @@ def create_account():
     account = Account(account_type=account_type)
     db.session.add(account)
     db.session.commit()
-    return make_response({'accountType': account.account_type,
-                         'accountId': account.account_id, 'balance': account.balance}, 200)
+    return make_response(
+        {
+            "accountType": account.account_type,
+            "accountId": account.account_id,
+            "balance": account.balance,
+        },
+        200,
+    )
 
 
 def top_up(accountId):
@@ -45,8 +51,8 @@ def top_up(accountId):
     Returns:
         [message]: [string]
     """
-    account_id = request.get_json()['accountId']
-    amount = request.get_json()['amount']
+    account_id = request.get_json()["accountId"]
+    amount = request.get_json()["amount"]
 
     if not account_id or not amount:
         return make_response(ErrorMessage.INVALID_DATA_INPUT)
@@ -57,5 +63,12 @@ def top_up(accountId):
 
     account.balance += amount
     db.session.commit()
-    return make_response({'accountType': account.account_type, 'accountId': account.account_id, 'balance': account.balance}, 200)
+    return make_response(
+        {
+            "accountType": account.account_type,
+            "accountId": account.account_id,
+            "balance": account.balance,
+        },
+        200,
+    )
     # return make_response(SuccessMessage.CREATE_SUCCESS)

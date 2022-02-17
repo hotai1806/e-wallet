@@ -4,9 +4,9 @@ class ErrorMessage(object):
     INVALID_MERCHANT_ID = {"message": "Invalid merchant id"}, 400
     INVALID_SIGNATURE = {"message": "Invalid signature"}, 400
 
+
 class SuccessMessage:
     CREATE_SUCCESS = {"message": "Success"}, 200
-    CONFIRM_SUCCESS = {"message": "Success", "code":"SUC"}, 200
-    VERIFY_SUCCESS = {"message": "Success", "code":"SUC"}, 200
-    CANCEL_SUCCESS = {"message": "Success", "code":"SUC"}, 200
-
+    CONFIRM_SUCCESS = {"message": "Success", "code": "SUC"}, 200
+    VERIFY_SUCCESS = {"message": "Success", "code": "SUC"}, 200
+    CANCEL_SUCCESS = {"message": "Success", "code": "SUC"}, 200
