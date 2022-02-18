@@ -35,7 +35,7 @@ def change_status_transaction(status, transaction_id):
 
     cur.execute(query, [transaction_id])
     transaction = cur.fetchall()
-    if transaction[-1][-1] == StatusTransaction.COMPLETED:
+    if transaction[-1][-1] == StatusTransaction.COMPLETED.value:
         return None
     query = "UPDATE transactions SET status = %s WHERE transaction_id = %s"
     cur.execute(query, (status, transaction_id))
@@ -96,7 +96,7 @@ def create_transaction(payload_jwt):
         "status": transaction.status,
     }
     Timer(300, change_status_transaction, [
-          StatusTransaction.CANCELED.value,
+          StatusTransaction.EXPIRED.value,
           transaction.transaction_id]).start()
 
     return make_response(data_response, 200)
@@ -140,7 +140,7 @@ def verify_transaction(payload_jwt):
     transactionId = body_data["transactionId"]
     transaction = Transaction.query.filter_by(
         transaction_id=transactionId).first()
-    if transaction.status != StatusTransaction.VERIFYED.value:
+    if transaction.status == StatusTransaction.VERIFYED.value:
         return make_response(SuccessMessage.VERIFY_SUCCESS)
     if transaction.status != StatusTransaction.CONFIRMED.value:
         return make_response(ErrorTransactionMessage.TRANSACTION_NOT_CONFIRMED)
@@ -155,11 +155,15 @@ def verify_transaction(payload_jwt):
     transaction.status = StatusTransaction.VERIFYED.value
     db.session.commit()
 
-    requests.put(url_update + str(transaction.extraData),
-                 data={
+    check_request = requests.put(url_update + str(transaction.extraData),
+                                 data={
         "status": StatusTransaction.COMPLETED.value
     })
-    return make_response(SuccessMessage.TRANSACTION_COMPLETED)
+    if(check_request.ok):
+        transaction.status = StatusTransaction.COMPLETED.value
+        db.session.commit()
+        return make_response(SuccessMessage.TRANSACTION_COMPLETED)
+    return make_response(SuccessMessage.VERIFY_SUCCESS)
 
 
 @authentication_required(AccountType.PERSONAL.value)
@@ -172,10 +176,9 @@ def cancel_transaction(payload_jwt):
     transaction = Transaction.query.filter_by(
         transaction_id=transactionId).first()
     # check status cancel equal to cancel
-    if transaction.status == StatusTransaction.CANCELED.value:
-        return make_response(SuccessMessage.CANCEL_SUCCESS)
-    if transaction.status == StatusTransaction.COMPLETED.value:
-        return make_response(ErrorTransactionMessage.TRANSACTION_COMPLETED)
+    print(transaction.status)
+    if transaction.status == StatusTransaction.CONFIRMED.value:
+        return make_response(ErrorTransactionMessage.TRANSACTION_NOT_CONFIRMED)
     transaction.status = StatusTransaction.CANCELED.value
     db.session.commit()
     return make_response(SuccessMessage.CANCEL_SUCCESS)
