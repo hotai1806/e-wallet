@@ -10,7 +10,7 @@ from src.controllers.transaction_controller import (
 transaction_bp = Blueprint("transaction_bp", __name__)
 
 # Route: /transactions/{action}
-transaction_bp.route("/", methods=["POST"])(create_transaction)
+transaction_bp.route("/create", methods=["POST"])(create_transaction)
 transaction_bp.route("/confirm", methods=["POST"])(confirm_transaction)
 transaction_bp.route("/verify", methods=["POST"])(verify_transaction)
 transaction_bp.route("/cancel", methods=["POST"])(cancel_transaction)

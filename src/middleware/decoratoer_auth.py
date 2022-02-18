@@ -50,6 +50,7 @@ def authentication_required(*list_account_type):
                 payload_jwt = decode_auth_token(token, SECRET_KEY)
             except Exception as error:
                 logger.error(error)
+                print("tai")
                 response = make_response({"message": str(error)}, 500)
                 return response
 

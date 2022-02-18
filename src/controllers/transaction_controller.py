@@ -3,6 +3,7 @@
 from flask import request, make_response
 import hashlib
 import json
+import requests
 from src.constants.account_type_constants import AccountType
 from src.models.account import Account
 
@@ -14,31 +15,33 @@ from src.constants.message_constant import (ErrorMessage,
                                             ErrorTransactionMessage)
 from src.constants.status_transaction_constants import StatusTransaction
 from src.middleware.decoratoer_auth import authentication_required
+from src.helper.log_helper import setup_logging
+logger = setup_logging()
 
-mock_request_create_transaction = {
-    "merchantId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "amount": 0,
-    "extraData": "string",
-    "signature": "string",
-}
-
-mock_response_create_transaction = {
-    "transactionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "merchantId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "incomeAccount": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "outcomeAccount": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "amount": 0,
-    "extraData": "string",
-    "signature": "225744eba143248ae232bf81d6366b66",
-    "status": "INITIALIZED",
-}
+url_update = "http://127.0.0.1:8000/order/"
 
 
 def change_status_transaction(status, transaction_id):
-    transaction = Transaction.query.filter_by(
-        transaction_id=transaction_id).first()
-    transaction.status = status
-    db.session.commit()
+    import psycopg2
+    conn = psycopg2.connect(host="localhost", port=5433,
+                            database="shopping", user="admin",
+                            password="youknow")
+    # Log in to the database
+    logger.info(status)
+    logger.info(transaction_id)
+    # Create a cursor object
+    cur = conn.cursor()
+    query = "SELECT * from transactions  WHERE transaction_id = %s"
+
+    cur.execute(query, [transaction_id])
+    transaction = cur.fetchall()
+    if transaction[-1][-1] == StatusTransaction.COMPLETED:
+        return None
+    query = "UPDATE transactions SET status = %s WHERE transaction_id = %s"
+    cur.execute(query, (status, transaction_id))
+    cur.close()
+    conn.commit()
+    return None
 
 
 @authentication_required(AccountType.MERCHANT.value)
@@ -47,11 +50,12 @@ def create_transaction(payload_jwt):
     controller submit login api POST
     return access_token: string || None
     """
+    from threading import Timer
     # Extract data from body
     body_data = request.form.to_dict()
     merchant_id = body_data["merchantId"]
-    extraData = body_data["extraData"]
-    amount = int(body_data["amount"])
+    extraData = int(body_data["extraData"])
+    amount = float(body_data["amount"])
     signature_body = body_data["signature"]
 
     # Prepare data to check signature
@@ -60,7 +64,6 @@ def create_transaction(payload_jwt):
         "amount": amount,
         "extraData": extraData,
     }
-
     signature = hashlib.md5(
         json.dumps(data_check_signature, sort_keys=True).encode("utf-8")
     ).hexdigest()
@@ -81,6 +84,7 @@ def create_transaction(payload_jwt):
     )
     db.session.add(transaction)
     db.session.commit()
+
     data_response = {
         "transactionId": transaction.transaction_id,
         "merchantId": transaction.merchant_id,
@@ -91,6 +95,9 @@ def create_transaction(payload_jwt):
         "extraData": transaction.extraData,
         "status": transaction.status,
     }
+    Timer(300, change_status_transaction, [
+          StatusTransaction.CANCELED.value,
+          transaction.transaction_id]).start()
 
     return make_response(data_response, 200)
 
@@ -106,12 +113,16 @@ def confirm_transaction(payload_jwt):
         transaction_id=transactionId).first()
 
     if transaction.status != StatusTransaction.INITIALIZED.value:
+        requests.put(url_update + str(transaction.extraData),
+                     data={"status": StatusTransaction.FAILED.value})
         return make_response(
-                ErrorTransactionMessage.TRANSACTION_NOT_INITIALIZED)
+            ErrorTransactionMessage.TRANSACTION_NOT_INITIALIZED)
     account = Account.query.filter_by(account_id=payload_jwt["user"]).first()
     if account.balance < transaction.amount:
-        change_status_transaction(StatusTransaction.FAILED.value,
-                                  transactionId)
+        transaction.status = StatusTransaction.FAILED.value
+        db.session.commit()
+        requests.put(url_update + str(transaction.extraData),
+                     data={"status": StatusTransaction.FAILED.value})
         return make_response(UserMessage.BALANCE_NOT_ENOUGH)
 
     transaction.status = StatusTransaction.CONFIRMED.value
@@ -143,7 +154,12 @@ def verify_transaction(payload_jwt):
     transaction.income_account.balance += transaction.amount
     transaction.status = StatusTransaction.VERIFYED.value
     db.session.commit()
-    return make_response(SuccessMessage.VERIFY_SUCCESS)
+
+    requests.put(url_update + str(transaction.extraData),
+                 data={
+        "status": StatusTransaction.COMPLETED.value
+    })
+    return make_response(SuccessMessage.TRANSACTION_COMPLETED)
 
 
 @authentication_required(AccountType.PERSONAL.value)

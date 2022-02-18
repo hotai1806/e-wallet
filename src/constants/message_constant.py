@@ -19,7 +19,8 @@ class UserMessage:
 
 
 class SuccessMessage:
-    CREATE_SUCCESS = {"message": "Success"}, 200
-    CONFIRM_SUCCESS = {"message": "Success", "code": "SUC"}, 200
-    VERIFY_SUCCESS = {"message": "Success", "code": "SUC"}, 200
-    CANCEL_SUCCESS = {"message": "Success", "code": "SUC"}, 200
+    CREATE_SUCCESS = {"message": "Init Success"}, 200
+    CONFIRM_SUCCESS = {"message": "Create Success", "code": "SUC"}, 200
+    VERIFY_SUCCESS = {"message": "Verify Success", "code": "SUC"}, 200
+    CANCEL_SUCCESS = {"message": "Cancel Success", "code": "SUC"}, 200
+    TRANSACTION_COMPLETED = {"message": "Transaction completed"}, 200
